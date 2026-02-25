@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高中政治选题库</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>📚 高中政治选题库</h1>
+    <nav>
+      <button class="tab active" data-tab="topics">选题管理</button>
+      <button class="tab" data-tab="dashboard">数据看板</button>
+      <button class="tab" data-tab="recommend">智能推荐</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 选题管理 -->
+    <section id="topics" class="panel active">
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="搜索选题标题、知识点、时政关联...">
+        <div class="filters">
+          <select id="filterGrade"><option value="">全部年级</option><option>高一</option><option>高二</option><option>高三</option><option>通用</option></select>
+          <select id="filterModule"><option value="">全部模块</option>
+            <option>必修1《中国特色社会主义》</option>
+            <option>必修2《经济与社会》</option>
+            <option>必修3《政治与法治》</option>
+            <option>必修4《哲学与文化》</option>
+            <option>选必1《当代国际政治与经济》</option>
+            <option>选必2《法律与生活》</option>
+            <option>选必3《逻辑与思维》</option>
+          </select>
+          <select id="filterType"><option value="">全部类型</option><option>时政分析</option><option>知识讲解</option><option>真题解析</option><option>热点评论</option><option>答题技巧</option></select>
+          <select id="filterDifficulty"><option value="">全部难度</option><option>基础</option><option>中等</option><option>拔高</option></select>
+          <select id="filterStatus"><option value="">全部状态</option><option>未用</option><option>已用</option><option>待更新</option></select>
+        </div>
+        <div class="actions">
+          <button id="btnAdd" class="btn-primary">+ 新增选题</button>
+          <button id="btnImport" class="btn-secondary">导入CSV</button>
+          <button id="btnExport" class="btn-secondary">导出CSV</button>
+          <input type="file" id="fileImport" accept=".csv" hidden>
+        </div>
+      </div>
+      <div class="stats-bar" id="statsBar"></div>
+      <div id="topicList"></div>
+    </section>
+
+    <!-- 数据看板 -->
+    <section id="dashboard" class="panel">
+      <div class="dashboard-grid">
+        <div class="card" id="cardOverview"><h3>📊 总览</h3><div class="card-body"></div></div>
+        <div class="card" id="cardModule"><h3>📖 模块流量排行</h3><div class="card-body"></div></div>
+        <div class="card" id="cardType"><h3>🎯 内容类型对比</h3><div class="card-body"></div></div>
+        <div class="card" id="cardPlatform"><h3>📱 平台表现对比</h3><div class="card-body"></div></div>
+        <div class="card" id="cardDifficulty"><h3>📈 难度与流量</h3><div class="card-body"></div></div>
+        <div class="card" id="cardHook"><h3>🎣 Hook类型效果</h3><div class="card-body"></div></div>
+        <div class="card" id="cardTime"><h3>⏰ 发布时间分析</h3><div class="card-body"></div></div>
+        <div class="card" id="cardKeywords"><h3>🔑 高流量关键词</h3><div class="card-body"></div></div>
+      </div>
+    </section>
+
+    <!-- 智能推荐 -->
+    <section id="recommend" class="panel">
+      <div class="recommend-grid">
+        <div class="card" id="cardHotModule"><h3>🔥 高潜力方向</h3><div class="card-body"></div></div>
+        <div class="card" id="cardUncovered"><h3>🕳️ 未覆盖知识点</h3><div class="card-body"></div></div>
+        <div class="card" id="cardRedo"><h3>♻️ 值得翻新的选题</h3><div class="card-body"></div></div>
+        <div class="card" id="cardNext"><h3>💡 下一步建议</h3><div class="card-body"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 新增/编辑弹窗 -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">新增选题</h2>
+        <button id="modalClose">&times;</button>
+      </div>
+      <form id="topicForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>选题标题 *</label>
+            <input type="text" name="title" required>
+          </div>
+          <div class="form-group">
+            <label>适用年级</label>
+            <select name="grade"><option>高一</option><option>高二</option><option selected>高三</option><option>通用</option></select>
+          </div>
+          <div class="form-group">
+            <label>教材模块</label>
+            <select name="module">
+              <option>必修1《中国特色社会主义》</option>
+              <option>必修2《经济与社会》</option>
+              <option>必修3《政治与法治》</option>
+              <option>必修4《哲学与文化》</option>
+              <option>选必1《当代国际政治与经济》</option>
+              <option>选必2《法律与生活》</option>
+              <option>选必3《逻辑与思维》</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>知识点</label>
+            <input type="text" name="knowledge" placeholder="多个用分号隔开">
+          </div>
+          <div class="form-group">
+            <label>内容类型</label>
+            <select name="contentType"><option>时政分析</option><option>知识讲解</option><option>真题解析</option><option>热点评论</option><option>答题技巧</option></select>
+          </div>
+          <div class="form-group">
+            <label>难度</label>
+            <select name="difficulty"><option>基础</option><option selected>中等</option><option>拔高</option></select>
+          </div>
+          <div class="form-group">
+            <label>时政关联</label>
+            <input type="text" name="political">
+          </div>
+          <div class="form-group">
+            <label>选题来源</label>
+            <select name="source"><option>时政热点</option><option>学生提问</option><option>评论区需求</option><option>真题改编</option><option>同行参考</option><option>其他</option></select>
+          </div>
+          <div class="form-group">
+            <label>视频时长</label>
+            <input type="text" name="duration" placeholder="如: 8分钟">
+          </div>
+          <div class="form-group">
+            <label>标题关键词</label>
+            <input type="text" name="keywords" placeholder="多个用分号隔开">
+          </div>
+          <div class="form-group">
+            <label>封面类型</label>
+            <select name="coverType"><option value="">未定</option><option>文字封面</option><option>人物出镜</option><option>图表</option><option>对比</option></select>
+          </div>
+          <div class="form-group">
+            <label>开头hook</label>
+            <select name="hook"><option value="">未定</option><option>提问</option><option>数据</option><option>反常识</option><option>痛点</option><option>悬念</option></select>
+          </div>
+          <div class="form-group full-width">
+            <label>备注</label>
+            <textarea name="notes" rows="2"></textarea>
+          </div>
+        </div>
+
+        <details class="traffic-section">
+          <summary>📊 流量数据（发布后填写）</summary>
+          <div class="form-group">
+            <label>发布日期</label>
+            <input type="date" name="publishDate">
+          </div>
+          <div class="form-group">
+            <label>发布时间段</label>
+            <input type="text" name="publishTime" placeholder="如: 18:00">
+          </div>
+          <div class="platform-data">
+            <h4>抖音</h4>
+            <div class="platform-row">
+              <input type="number" name="dy_play" placeholder="播放量">
+              <input type="number" name="dy_like" placeholder="点赞">
+              <input type="number" name="dy_comment" placeholder="评论">
+              <input type="number" name="dy_fav" placeholder="收藏">
+              <input type="number" name="dy_share" placeholder="转发">
+              <input type="text" name="dy_finish" placeholder="完播率">
+            </div>
+            <h4>小红书</h4>
+            <div class="platform-row">
+              <input type="number" name="xhs_play" placeholder="播放量">
+              <input type="number" name="xhs_like" placeholder="点赞">
+              <input type="number" name="xhs_comment" placeholder="评论">
+              <input type="number" name="xhs_fav" placeholder="收藏">
+              <input type="number" name="xhs_share" placeholder="转发">
+            </div>
+            <h4>B站</h4>
+            <div class="platform-row">
+              <input type="number" name="bili_play" placeholder="播放量">
+              <input type="number" name="bili_like" placeholder="点赞">
+              <input type="number" name="bili_comment" placeholder="评论">
+              <input type="number" name="bili_fav" placeholder="收藏">
+              <input type="number" name="bili_share" placeholder="转发">
+              <input type="text" name="bili_finish" placeholder="完播率">
+            </div>
+            <h4>视频号</h4>
+            <div class="platform-row">
+              <input type="number" name="sph_play" placeholder="播放量">
+              <input type="number" name="sph_like" placeholder="点赞">
+              <input type="number" name="sph_comment" placeholder="评论">
+              <input type="number" name="sph_fav" placeholder="收藏">
+              <input type="number" name="sph_share" placeholder="转发">
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>涨粉数</label>
+              <input type="number" name="newFollowers">
+            </div>
+            <div class="form-group">
+              <label>流量评级</label>
+              <select name="rating"><option value="">未评</option><option>爆款</option><option>良好</option><option>一般</option><option>扑了</option></select>
+            </div>
+            <div class="form-group full-width">
+              <label>流量备注</label>
+              <textarea name="trafficNotes" rows="2" placeholder="分析为什么好/差"></textarea>
+            </div>
+          </div>
+        </details>
+
+        <div class="form-actions">
+          <button type="button" id="btnDelete" class="btn-danger hidden">删除</button>
+          <button type="submit" class="btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
