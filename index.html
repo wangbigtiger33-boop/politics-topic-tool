@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>高中政治选题库</title>
+<title>高中政治选题库 Pro</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
   <header>
-    <h1>📚 高中政治选题库</h1>
+    <h1>📚 高中政治选题库 Pro</h1>
     <nav>
       <button class="tab active" data-tab="topics">选题管理</button>
       <button class="tab" data-tab="dashboard">数据看板</button>
@@ -21,21 +21,13 @@
     <!-- 选题管理 -->
     <section id="topics" class="panel active">
       <div class="toolbar">
-        <input type="text" id="searchInput" placeholder="搜索选题标题、知识点、时政关联...">
+        <input type="text" id="searchInput" placeholder="搜索标题、考点、关键词、钩子...">
         <div class="filters">
           <select id="filterGrade"><option value="">全部年级</option><option>高一</option><option>高二</option><option>高三</option><option>通用</option></select>
-          <select id="filterModule"><option value="">全部模块</option>
-            <option>必修1《中国特色社会主义》</option>
-            <option>必修2《经济与社会》</option>
-            <option>必修3《政治与法治》</option>
-            <option>必修4《哲学与文化》</option>
-            <option>选必1《当代国际政治与经济》</option>
-            <option>选必2《法律与生活》</option>
-            <option>选必3《逻辑与思维》</option>
-          </select>
-          <select id="filterType"><option value="">全部类型</option><option>时政分析</option><option>知识讲解</option><option>真题解析</option><option>热点评论</option><option>答题技巧</option></select>
-          <select id="filterDifficulty"><option value="">全部难度</option><option>基础</option><option>中等</option><option>拔高</option></select>
-          <select id="filterStatus"><option value="">全部状态</option><option>未用</option><option>已用</option><option>待更新</option></select>
+          <select id="filterCategory"><option value="">全部分类</option></select>
+          <select id="filterType"><option value="">全部类型</option></select>
+          <select id="filterStatus"><option value="">全部状态</option><option>待策划</option><option>待拍摄</option><option>拍摄中</option><option>待发布</option><option>已发布</option></select>
+          <select id="filterPriority"><option value="">全部优先级</option><option value="high">高(8-10)</option><option value="mid">中(5-7)</option><option value="low">低(1-4)</option></select>
         </div>
         <div class="actions">
           <button id="btnAdd" class="btn-primary">+ 新增选题</button>
@@ -52,12 +44,12 @@
     <section id="dashboard" class="panel">
       <div class="dashboard-grid">
         <div class="card" id="cardOverview"><h3>📊 总览</h3><div class="card-body"></div></div>
-        <div class="card" id="cardModule"><h3>📖 模块流量排行</h3><div class="card-body"></div></div>
+        <div class="card" id="cardCategory"><h3>📖 分类流量排行</h3><div class="card-body"></div></div>
         <div class="card" id="cardType"><h3>🎯 内容类型对比</h3><div class="card-body"></div></div>
-        <div class="card" id="cardPlatform"><h3>📱 平台表现对比</h3><div class="card-body"></div></div>
-        <div class="card" id="cardDifficulty"><h3>📈 难度与流量</h3><div class="card-body"></div></div>
-        <div class="card" id="cardHook"><h3>🎣 Hook类型效果</h3><div class="card-body"></div></div>
+        <div class="card" id="cardChannel"><h3>📱 发布渠道分析</h3><div class="card-body"></div></div>
+        <div class="card" id="cardHook"><h3>🎣 钩子效果分析</h3><div class="card-body"></div></div>
         <div class="card" id="cardTime"><h3>⏰ 发布时间分析</h3><div class="card-body"></div></div>
+        <div class="card" id="cardConversion"><h3>💰 转化漏斗</h3><div class="card-body"></div></div>
         <div class="card" id="cardKeywords"><h3>🔑 高流量关键词</h3><div class="card-body"></div></div>
       </div>
     </section>
@@ -65,15 +57,15 @@
     <!-- 智能推荐 -->
     <section id="recommend" class="panel">
       <div class="recommend-grid">
-        <div class="card" id="cardHotModule"><h3>🔥 高潜力方向</h3><div class="card-body"></div></div>
-        <div class="card" id="cardUncovered"><h3>🕳️ 未覆盖知识点</h3><div class="card-body"></div></div>
-        <div class="card" id="cardRedo"><h3>♻️ 值得翻新的选题</h3><div class="card-body"></div></div>
+        <div class="card" id="cardHotDir"><h3>🔥 高潜力方向</h3><div class="card-body"></div></div>
+        <div class="card" id="cardUncovered"><h3>🕳️ 未覆盖考点</h3><div class="card-body"></div></div>
+        <div class="card" id="cardRedo"><h3>♻️ 值得翻新</h3><div class="card-body"></div></div>
         <div class="card" id="cardNext"><h3>💡 下一步建议</h3><div class="card-body"></div></div>
       </div>
     </section>
   </main>
 
-  <!-- 新增/编辑弹窗 -->
+  <!-- 弹窗 -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
@@ -81,130 +73,90 @@
         <button id="modalClose">&times;</button>
       </div>
       <form id="topicForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>选题标题 *</label>
-            <input type="text" name="title" required>
-          </div>
-          <div class="form-group">
-            <label>适用年级</label>
-            <select name="grade"><option>高一</option><option>高二</option><option selected>高三</option><option>通用</option></select>
-          </div>
-          <div class="form-group">
-            <label>教材模块</label>
-            <select name="module">
-              <option>必修1《中国特色社会主义》</option>
-              <option>必修2《经济与社会》</option>
-              <option>必修3《政治与法治》</option>
-              <option>必修4《哲学与文化》</option>
-              <option>选必1《当代国际政治与经济》</option>
-              <option>选必2《法律与生活》</option>
-              <option>选必3《逻辑与思维》</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>知识点</label>
-            <input type="text" name="knowledge" placeholder="多个用分号隔开">
-          </div>
-          <div class="form-group">
-            <label>内容类型</label>
-            <select name="contentType"><option>时政分析</option><option>知识讲解</option><option>真题解析</option><option>热点评论</option><option>答题技巧</option></select>
-          </div>
-          <div class="form-group">
-            <label>难度</label>
-            <select name="difficulty"><option>基础</option><option selected>中等</option><option>拔高</option></select>
-          </div>
-          <div class="form-group">
-            <label>时政关联</label>
-            <input type="text" name="political">
-          </div>
-          <div class="form-group">
-            <label>选题来源</label>
-            <select name="source"><option>时政热点</option><option>学生提问</option><option>评论区需求</option><option>真题改编</option><option>同行参考</option><option>其他</option></select>
-          </div>
-          <div class="form-group">
-            <label>视频时长</label>
-            <input type="text" name="duration" placeholder="如: 8分钟">
-          </div>
-          <div class="form-group">
-            <label>标题关键词</label>
-            <input type="text" name="keywords" placeholder="多个用分号隔开">
-          </div>
-          <div class="form-group">
-            <label>封面类型</label>
-            <select name="coverType"><option value="">未定</option><option>文字封面</option><option>人物出镜</option><option>图表</option><option>对比</option></select>
-          </div>
-          <div class="form-group">
-            <label>开头hook</label>
-            <select name="hook"><option value="">未定</option><option>提问</option><option>数据</option><option>反常识</option><option>痛点</option><option>悬念</option></select>
-          </div>
-          <div class="form-group full-width">
-            <label>备注</label>
-            <textarea name="notes" rows="2"></textarea>
+        <div class="form-tabs">
+          <button type="button" class="ftab active" data-ftab="basic">基本信息</button>
+          <button type="button" class="ftab" data-ftab="content">内容策划</button>
+          <button type="button" class="ftab" data-ftab="publish">发布信息</button>
+          <button type="button" class="ftab" data-ftab="traffic">流量数据</button>
+          <button type="button" class="ftab" data-ftab="review">复盘</button>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="ftab-panel active" id="ftab-basic">
+          <div class="form-grid">
+            <div class="form-group full-width"><label>选题标题 *</label><input type="text" name="title" required></div>
+            <div class="form-group"><label>系列/栏目</label><input type="text" name="series"></div>
+            <div class="form-group"><label>一级分类（母题）</label><input type="text" name="category1"></div>
+            <div class="form-group"><label>二级分类（内容类型）</label><input type="text" name="category2"></div>
+            <div class="form-group"><label>题型</label><input type="text" name="questionType"></div>
+            <div class="form-group"><label>对应考点/章节</label><input type="text" name="examPoint"></div>
+            <div class="form-group"><label>关键词标签</label><input type="text" name="keywords" placeholder="3-5个，逗号隔开"></div>
+            <div class="form-group"><label>目标年级/人群</label><select name="grade"><option>高一</option><option>高二</option><option selected>高三</option><option>通用</option></select></div>
+            <div class="form-group"><label>优先级(1-10)</label><input type="number" name="priority" min="1" max="10" value="5"></div>
+            <div class="form-group"><label>制作状态</label><select name="status"><option>待策划</option><option>待拍摄</option><option>拍摄中</option><option>待发布</option><option>已发布</option></select></div>
+            <div class="form-group"><label>负责人</label><input type="text" name="owner"></div>
+            <div class="form-group"><label>计划拍摄日</label><input type="date" name="planShootDate"></div>
+            <div class="form-group"><label>计划发布日期</label><input type="date" name="planPublishDate"></div>
           </div>
         </div>
 
-        <details class="traffic-section">
-          <summary>📊 流量数据（发布后填写）</summary>
-          <div class="form-group">
-            <label>发布日期</label>
-            <input type="date" name="publishDate">
-          </div>
-          <div class="form-group">
-            <label>发布时间段</label>
-            <input type="text" name="publishTime" placeholder="如: 18:00">
-          </div>
-          <div class="platform-data">
-            <h4>抖音</h4>
-            <div class="platform-row">
-              <input type="number" name="dy_play" placeholder="播放量">
-              <input type="number" name="dy_like" placeholder="点赞">
-              <input type="number" name="dy_comment" placeholder="评论">
-              <input type="number" name="dy_fav" placeholder="收藏">
-              <input type="number" name="dy_share" placeholder="转发">
-              <input type="text" name="dy_finish" placeholder="完播率">
-            </div>
-            <h4>小红书</h4>
-            <div class="platform-row">
-              <input type="number" name="xhs_play" placeholder="播放量">
-              <input type="number" name="xhs_like" placeholder="点赞">
-              <input type="number" name="xhs_comment" placeholder="评论">
-              <input type="number" name="xhs_fav" placeholder="收藏">
-              <input type="number" name="xhs_share" placeholder="转发">
-            </div>
-            <h4>B站</h4>
-            <div class="platform-row">
-              <input type="number" name="bili_play" placeholder="播放量">
-              <input type="number" name="bili_like" placeholder="点赞">
-              <input type="number" name="bili_comment" placeholder="评论">
-              <input type="number" name="bili_fav" placeholder="收藏">
-              <input type="number" name="bili_share" placeholder="转发">
-              <input type="text" name="bili_finish" placeholder="完播率">
-            </div>
-            <h4>视频号</h4>
-            <div class="platform-row">
-              <input type="number" name="sph_play" placeholder="播放量">
-              <input type="number" name="sph_like" placeholder="点赞">
-              <input type="number" name="sph_comment" placeholder="评论">
-              <input type="number" name="sph_fav" placeholder="收藏">
-              <input type="number" name="sph_share" placeholder="转发">
-            </div>
-          </div>
+        <!-- 内容策划 -->
+        <div class="ftab-panel" id="ftab-content">
           <div class="form-grid">
-            <div class="form-group">
-              <label>涨粉数</label>
-              <input type="number" name="newFollowers">
-            </div>
-            <div class="form-group">
-              <label>流量评级</label>
-              <select name="rating"><option value="">未评</option><option>爆款</option><option>良好</option><option>一般</option><option>扑了</option></select>
-            </div>
-            <div class="form-group full-width">
-              <label>流量备注</label>
-              <textarea name="trafficNotes" rows="2" placeholder="分析为什么好/差"></textarea>
-            </div>
+            <div class="form-group full-width"><label>场景/触发</label><input type="text" name="scene" placeholder="学生什么时候会搜这个"></div>
+            <div class="form-group full-width"><label>核心矛盾（他们卡在哪）</label><textarea name="coreProblem" rows="2"></textarea></div>
+            <div class="form-group full-width"><label>价值承诺（看完收获）</label><textarea name="valuePromise" rows="2"></textarea></div>
+            <div class="form-group full-width"><label>钩子一句话（前3秒）</label><input type="text" name="hook"></div>
+            <div class="form-group full-width"><label>结构大纲（3点）</label><textarea name="outline" rows="3" placeholder="1. xxx&#10;2. xxx&#10;3. xxx"></textarea></div>
+            <div class="form-group full-width"><label>例题/案例来源</label><input type="text" name="caseSource"></div>
+            <div class="form-group full-width"><label>你提供的解法（一句话）</label><input type="text" name="solution"></div>
+            <div class="form-group full-width"><label>可抄模板/关键句</label><textarea name="templateSentence" rows="2"></textarea></div>
+            <div class="form-group"><label>资料钩子（领什么）</label><input type="text" name="materialHook"></div>
+            <div class="form-group"><label>转化动作（评论/私信关键词）</label><input type="text" name="conversionAction"></div>
+            <div class="form-group full-width"><label>产品承接（试听/课包/1v1）</label><input type="text" name="productLink"></div>
           </div>
-        </details>
+        </div>
+
+        <!-- 发布信息 -->
+        <div class="ftab-panel" id="ftab-publish">
+          <div class="form-grid">
+            <div class="form-group"><label>实际发布日期</label><input type="date" name="publishDate"></div>
+            <div class="form-group"><label>发布渠道</label><input type="text" name="channel" placeholder="抖音/小红书/B站/视频号"></div>
+            <div class="form-group"><label>发布时间段</label><input type="text" name="publishTime" placeholder="如 21:00"></div>
+            <div class="form-group"><label>时长（秒）</label><input type="number" name="duration"></div>
+            <div class="form-group"><label>封面6字大字</label><input type="text" name="coverTitle" maxlength="8"></div>
+            <div class="form-group"><label>封面副标题（12字）</label><input type="text" name="coverSub" maxlength="15"></div>
+            <div class="form-group full-width"><label>标题A</label><input type="text" name="titleA"></div>
+            <div class="form-group full-width"><label>标题B</label><input type="text" name="titleB"></div>
+            <div class="form-group full-width"><label>标题C</label><input type="text" name="titleC"></div>
+            <div class="form-group full-width"><label>发布链接</label><input type="text" name="publishUrl"></div>
+          </div>
+        </div>
+
+        <!-- 流量数据 -->
+        <div class="ftab-panel" id="ftab-traffic">
+          <div class="form-grid">
+            <div class="form-group"><label>播放量</label><input type="number" name="views"></div>
+            <div class="form-group"><label>完播率</label><input type="text" name="finishRate" placeholder="如 42%"></div>
+            <div class="form-group"><label>平均观看时长（秒）</label><input type="number" name="avgWatch"></div>
+            <div class="form-group"><label>点赞数</label><input type="number" name="likes"></div>
+            <div class="form-group"><label>收藏数</label><input type="number" name="favs"></div>
+            <div class="form-group"><label>评论数</label><input type="number" name="comments"></div>
+            <div class="form-group"><label>转发数</label><input type="number" name="shares"></div>
+            <div class="form-group"><label>私信/咨询数</label><input type="number" name="inquiries"></div>
+            <div class="form-group full-width"><label>转化结果（加微/报名/成交）</label><input type="text" name="conversionResult"></div>
+          </div>
+        </div>
+
+        <!-- 复盘 -->
+        <div class="ftab-panel" id="ftab-review">
+          <div class="form-grid">
+            <div class="form-group full-width"><label>评论区高频问题</label><textarea name="topComments" rows="3"></textarea></div>
+            <div class="form-group full-width"><label>复盘要点（为什么好/差）</label><textarea name="reviewNotes" rows="3"></textarea></div>
+            <div class="form-group full-width"><label>下一条延伸选题</label><input type="text" name="nextTopic"></div>
+            <div class="form-group full-width"><label>下次优化动作（1句话）</label><input type="text" name="nextAction"></div>
+          </div>
+        </div>
 
         <div class="form-actions">
           <button type="button" id="btnDelete" class="btn-danger hidden">删除</button>
