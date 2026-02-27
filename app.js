@@ -37,6 +37,27 @@ function shortNum(n) { if(n>=10000) return (n/10000).toFixed(1)+'w'; if(n>=1000)
 let topics = load();
 let editingId = null;
 
+// ========== 分类联动 ==========
+const CAT2_MAP = {
+  '1.流量获客类': ['a.热点政治解读','b.学科价值重塑','c.考试避坑指南','d.学习方法论'],
+  '2.信任建立类': ['a.干货知识拆解','b.真题逻辑复盘','c.备考进度规划','d.作业/试卷点评'],
+  '3.变现转化类': ['a.课程精华片段','b.学员反馈见证','c.课程大纲解读','d.限时变现活动'],
+  '4.辅助选题': ['a.教师日常生活','b.教育观念碰撞']
+};
+const ALL_CAT2 = Object.values(CAT2_MAP).flat();
+
+function updateCat2(selectEl, cat1, currentVal) {
+  const opts = cat1 && CAT2_MAP[cat1] ? CAT2_MAP[cat1] : ALL_CAT2;
+  selectEl.innerHTML = '<option value="">请选择</option>' + opts.map(o =>
+    `<option${o === currentVal ? ' selected' : ''}>${o}</option>`
+  ).join('');
+}
+
+// 表单内联动
+document.querySelector('select[name="category1"]').addEventListener('change', function() {
+  updateCat2(document.getElementById('category2Select'), this.value, '');
+});
+
 // ========== Tab 切换 ==========
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -71,10 +92,7 @@ const filterPriority = document.getElementById('filterPriority');
 [filterGrade, filterCategory, filterType, filterStatus, filterPriority].forEach(el => el.addEventListener('change', renderTopics));
 
 function updateFilterOptions() {
-  const cats1 = [...new Set(topics.map(t=>t.category1).filter(Boolean))];
-  const cats2 = [...new Set(topics.map(t=>t.category2).filter(Boolean))];
-  filterCategory.innerHTML = '<option value="">全部分类</option>' + cats1.map(c=>`<option>${c}</option>`).join('');
-  filterType.innerHTML = '<option value="">全部类型</option>' + cats2.map(c=>`<option>${c}</option>`).join('');
+  // 筛选选项已预设在HTML中，无需动态更新
 }
 
 function getFiltered() {
@@ -182,7 +200,7 @@ function openEdit(id) {
   f.title.value = t.title || '';
   f.series.value = t.series || '';
   f.category1.value = t.category1 || '';
-  f.category2.value = t.category2 || '';
+  updateCat2(document.getElementById('category2Select'), t.category1, t.category2);
   f.questionType.value = t.questionType || '';
   f.examPoint.value = t.examPoint || '';
   f.keywords.value = t.keywords || '';
@@ -385,3 +403,244 @@ function parseCSVLine(line) {
   result.push(current);
   return result;
 }
+
+// ========== 数据看板 ==========
+function renderDashboard() {
+  const published = topics.filter(t => t.status === '已发布');
+  const withData = published.filter(t => (t.views||0) > 0);
+
+  // 总览
+  const totalViews = withData.reduce((s,t) => s+(t.views||0), 0);
+  const totalLikes = withData.reduce((s,t) => s+(t.likes||0), 0);
+  const totalFavs = withData.reduce((s,t) => s+(t.favs||0), 0);
+  const totalComments = withData.reduce((s,t) => s+(t.comments||0), 0);
+  const totalInquiries = withData.reduce((s,t) => s+(t.inquiries||0), 0);
+  document.querySelector('#cardOverview .card-body').innerHTML = `
+    <div class="overview-grid">
+      <div><div class="overview-num">${topics.length}</div><div class="overview-label">总选题</div></div>
+      <div><div class="overview-num">${published.length}</div><div class="overview-label">已发布</div></div>
+      <div><div class="overview-num">${topics.filter(t=>t.status==='待策划'||t.status==='待拍摄').length}</div><div class="overview-label">待制作</div></div>
+      <div><div class="overview-num">${totalViews.toLocaleString()}</div><div class="overview-label">总播放</div></div>
+      <div><div class="overview-num">${(totalLikes+totalFavs+totalComments).toLocaleString()}</div><div class="overview-label">总互动</div></div>
+      <div><div class="overview-num">${totalInquiries}</div><div class="overview-label">总咨询</div></div>
+    </div>`;
+
+  // 分类流量排行
+  renderBarChart('#cardCategory .card-body', groupBy(withData,'category1'), t=>t.views||0);
+  // 内容类型对比
+  renderBarChart('#cardType .card-body', groupBy(withData,'category2'), t=>t.views||0);
+
+  // 发布渠道分析
+  const channels = {};
+  withData.forEach(t => {
+    if (!t.channel) return;
+    t.channel.split(/[/\/、,，]/).forEach(ch => {
+      ch = ch.trim();
+      if (!ch) return;
+      if (!channels[ch]) channels[ch] = [];
+      channels[ch].push(t);
+    });
+  });
+  renderBarChartFromGroups('#cardChannel .card-body', channels, t=>t.views||0);
+
+  // 钩子效果
+  const hooked = withData.filter(t => t.hook);
+  if (hooked.length) {
+    const hookLen = {};
+    hooked.forEach(t => {
+      const len = t.hook.length <= 15 ? '短(≤15字)' : t.hook.length <= 25 ? '中(16-25字)' : '长(>25字)';
+      if (!hookLen[len]) hookLen[len] = [];
+      hookLen[len].push(t);
+    });
+    renderBarChartFromGroups('#cardHook .card-body', hookLen, t=>t.views||0, true);
+  } else {
+    document.querySelector('#cardHook .card-body').innerHTML = noData();
+  }
+
+  // 发布时间分析
+  const timed = withData.filter(t => t.publishTime);
+  if (timed.length) {
+    const timeGroups = {};
+    timed.forEach(t => {
+      const h = parseInt(t.publishTime);
+      let slot = '其他';
+      if (h >= 6 && h < 12) slot = '上午 6-12';
+      else if (h >= 12 && h < 18) slot = '下午 12-18';
+      else if (h >= 18 && h < 21) slot = '晚间 18-21';
+      else if (h >= 21 || h < 6) slot = '深夜 21-6';
+      if (!timeGroups[slot]) timeGroups[slot] = [];
+      timeGroups[slot].push(t);
+    });
+    renderBarChartFromGroups('#cardTime .card-body', timeGroups, t=>t.views||0, true);
+  } else {
+    document.querySelector('#cardTime .card-body').innerHTML = noData();
+  }
+
+  // 转化漏斗
+  if (withData.length) {
+    const funnel = [
+      {label:'播放', val: totalViews},
+      {label:'点赞', val: totalLikes},
+      {label:'收藏', val: totalFavs},
+      {label:'评论', val: totalComments},
+      {label:'咨询', val: totalInquiries}
+    ];
+    const fMax = Math.max(...funnel.map(f=>f.val), 1);
+    document.querySelector('#cardConversion .card-body').innerHTML = funnel.map(f => `
+      <div class="funnel-step">
+        <div class="funnel-label">${f.label}</div>
+        <div class="funnel-bar" style="width:${Math.max((f.val/fMax*100),5).toFixed(1)}%">${shortNum(f.val)}</div>
+        <div class="funnel-value">${f.val.toLocaleString()}</div>
+      </div>`).join('');
+  } else {
+    document.querySelector('#cardConversion .card-body').innerHTML = noData();
+  }
+
+  // 高流量关键词
+  const kwMap = {};
+  withData.forEach(t => {
+    if (!t.keywords) return;
+    t.keywords.split(/[;；,，、]/).forEach(kw => {
+      kw = kw.trim();
+      if (!kw) return;
+      if (!kwMap[kw]) kwMap[kw] = {count:0, views:0};
+      kwMap[kw].count++;
+      kwMap[kw].views += (t.views||0);
+    });
+  });
+  const kwList = Object.entries(kwMap).sort((a,b) => b[1].views - a[1].views).slice(0,10);
+  if (kwList.length) {
+    const kwMax = Math.max(...kwList.map(k=>k[1].views), 1);
+    document.querySelector('#cardKeywords .card-body').innerHTML = kwList.map(([kw,d]) => `
+      <div class="bar-row">
+        <div class="bar-label">${kw}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.views/kwMax*100).toFixed(1)}%">${shortNum(d.views)}</div></div>
+        <div class="bar-value">×${d.count}</div>
+      </div>`).join('');
+  } else {
+    document.querySelector('#cardKeywords .card-body').innerHTML = noData();
+  }
+}
+
+function noData() { return '<div style="color:#94a3b8;text-align:center;padding:20px;">暂无数据</div>'; }
+
+function groupBy(arr, key) {
+  const g = {};
+  arr.forEach(t => { const k = t[key] || '未分类'; if (!g[k]) g[k] = []; g[k].push(t); });
+  return g;
+}
+
+function renderBarChart(sel, groups, valFn, avg=false) {
+  const entries = Object.entries(groups).map(([label, items]) => {
+    const total = items.reduce((s,t) => s + valFn(t), 0);
+    return {label, val: avg ? Math.round(total/items.length) : total, count: items.length};
+  }).sort((a,b) => b.val - a.val);
+  const max = Math.max(...entries.map(e=>e.val), 1);
+  document.querySelector(sel).innerHTML = entries.length ? entries.map(e => `
+    <div class="bar-row">
+      <div class="bar-label" title="${e.label}">${e.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(e.val/max*100).toFixed(1)}%">${e.val>0?shortNum(e.val):''}</div></div>
+      <div class="bar-value">${avg?'均':'共'}${e.val.toLocaleString()} (${e.count})</div>
+    </div>`).join('') : noData();
+}
+
+function renderBarChartFromGroups(sel, groups, valFn, avg=false) {
+  const entries = Object.entries(groups).map(([label, items]) => {
+    const total = items.reduce((s,t) => s + valFn(t), 0);
+    return {label, val: avg ? Math.round(total/items.length) : total, count: items.length};
+  }).sort((a,b) => b.val - a.val);
+  const max = Math.max(...entries.map(e=>e.val), 1);
+  document.querySelector(sel).innerHTML = entries.length ? entries.map(e => `
+    <div class="bar-row">
+      <div class="bar-label">${e.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(e.val/max*100).toFixed(1)}%">${e.val>0?shortNum(e.val):''}</div></div>
+      <div class="bar-value">${avg?'均':'共'}${e.val.toLocaleString()} (${e.count})</div>
+    </div>`).join('') : noData();
+}
+
+// ========== 智能推荐 ==========
+function renderRecommend() {
+  const withData = topics.filter(t => t.status === '已发布' && (t.views||0) > 0);
+
+  // 高潜力方向
+  const combos = {};
+  withData.forEach(t => {
+    const key = (t.category1||'未分类') + ' × ' + (t.category2||'未分类');
+    if (!combos[key]) combos[key] = [];
+    combos[key].push(t);
+  });
+  const hotCombos = Object.entries(combos)
+    .map(([label,items]) => ({label, avg: Math.round(items.reduce((s,t)=>s+(t.views||0),0)/items.length), count: items.length}))
+    .sort((a,b) => b.avg - a.avg).slice(0,8);
+
+  document.querySelector('#cardHotDir .card-body').innerHTML = hotCombos.length
+    ? hotCombos.map((c,i) => `<div class="rec-item">
+        <strong>${i+1}. ${c.label}</strong>
+        <div class="rec-reason">均播放 ${c.avg.toLocaleString()} | ${c.count} 条 ${c.count<3?'⚡ 产量少效果好':''}
+        </div></div>`).join('')
+    : noData();
+
+  // 未覆盖分类
+  const coveredCat2 = new Set(topics.map(t=>t.category2).filter(Boolean));
+  const uncovered = ALL_CAT2.filter(c => !coveredCat2.has(c));
+  const cat1Count = {};
+  Object.keys(CAT2_MAP).forEach(k => cat1Count[k] = 0);
+  topics.forEach(t => { if (cat1Count[t.category1] !== undefined) cat1Count[t.category1]++; });
+  const sparse = Object.entries(cat1Count).sort((a,b)=>a[1]-b[1]);
+
+  let html = '';
+  if (uncovered.length) {
+    html += '<div style="margin-bottom:8px;font-weight:600;color:#ef4444;">未覆盖的内容类型：</div>';
+    html += uncovered.map(c => `<div class="rec-item">${c}</div>`).join('');
+  }
+  html += '<div style="margin-top:12px;margin-bottom:8px;font-weight:600;">各分类选题数量：</div>';
+  html += sparse.map(([k,v]) => `<div class="rec-item">${k} — ${v} 条</div>`).join('');
+  document.querySelector('#cardUncovered .card-body').innerHTML = html;
+
+  // 值得翻新
+  const redoable = withData
+    .filter(t => { if (!t.publishDate) return false; return (Date.now()-new Date(t.publishDate).getTime())/86400000 > 60; })
+    .sort((a,b) => (b.views||0)-(a.views||0)).slice(0,5);
+  document.querySelector('#cardRedo .card-body').innerHTML = redoable.length
+    ? redoable.map(t => `<div class="rec-item"><strong>${t.title}</strong>
+        <div class="rec-reason">播放 ${(t.views||0).toLocaleString()} | 发布于 ${t.publishDate}</div></div>`).join('')
+    : '<div style="color:#94a3b8;padding:20px;text-align:center;">发布60天以上的高流量选题会出现在这里</div>';
+
+  // 下一步建议
+  const suggestions = [];
+  if (withData.length >= 3) {
+    const catAvg = {};
+    withData.forEach(t => {
+      const k = t.category1 || '未分类';
+      if (!catAvg[k]) catAvg[k] = {sum:0,count:0};
+      catAvg[k].sum += (t.views||0);
+      catAvg[k].count++;
+    });
+    const best = Object.entries(catAvg).map(([k,d])=>({k,avg:d.sum/d.count})).sort((a,b)=>b.avg-a.avg)[0];
+    if (best) suggestions.push(`📈 「${best.k}」均播放最高（${shortNum(Math.round(best.avg))}），建议多产`);
+  }
+
+  const unused = topics.filter(t => t.status === '待策划' || t.status === '待拍摄');
+  if (unused.length) suggestions.push(`📝 还有 ${unused.length} 条选题待制作`);
+  if (withData.length < 10) suggestions.push(`📊 目前 ${withData.length} 条有数据，积累20+条后分析更准`);
+
+  if (withData.length >= 3) {
+    const cat2Avg = {};
+    withData.forEach(t => {
+      const k = t.category2 || '未分类';
+      if (!cat2Avg[k]) cat2Avg[k] = {sum:0,count:0};
+      cat2Avg[k].sum += (t.views||0);
+      cat2Avg[k].count++;
+    });
+    const bestType = Object.entries(cat2Avg).map(([k,d])=>({k,avg:d.sum/d.count})).sort((a,b)=>b.avg-a.avg)[0];
+    if (bestType) suggestions.push(`🎯 「${bestType.k}」类型效果最好，均播放 ${shortNum(Math.round(bestType.avg))}`);
+  }
+
+  document.querySelector('#cardNext .card-body').innerHTML = suggestions.length
+    ? suggestions.map(s => `<div class="rec-item">${s}</div>`).join('')
+    : '<div style="color:#94a3b8;padding:20px;text-align:center;">积累更多数据后解锁建议</div>';
+}
+
+// ========== 初始化 ==========
+updateFilterOptions();
+renderTopics();

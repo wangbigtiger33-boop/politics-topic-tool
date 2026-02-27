@@ -24,8 +24,28 @@
         <input type="text" id="searchInput" placeholder="搜索标题、考点、关键词、钩子...">
         <div class="filters">
           <select id="filterGrade"><option value="">全部年级</option><option>高一</option><option>高二</option><option>高三</option><option>通用</option></select>
-          <select id="filterCategory"><option value="">全部分类</option></select>
-          <select id="filterType"><option value="">全部类型</option></select>
+          <select id="filterCategory"><option value="">全部分类</option>
+            <option>1.流量获客类</option>
+            <option>2.信任建立类</option>
+            <option>3.变现转化类</option>
+            <option>4.辅助选题</option>
+          </select>
+          <select id="filterType"><option value="">全部类型</option>
+            <option>a.热点政治解读</option>
+            <option>b.学科价值重塑</option>
+            <option>c.考试避坑指南</option>
+            <option>d.学习方法论</option>
+            <option>a.干货知识拆解</option>
+            <option>b.真题逻辑复盘</option>
+            <option>c.备考进度规划</option>
+            <option>d.作业/试卷点评</option>
+            <option>a.课程精华片段</option>
+            <option>b.学员反馈见证</option>
+            <option>c.课程大纲解读</option>
+            <option>d.限时变现活动</option>
+            <option>a.教师日常生活</option>
+            <option>b.教育观念碰撞</option>
+          </select>
           <select id="filterStatus"><option value="">全部状态</option><option>待策划</option><option>待拍摄</option><option>拍摄中</option><option>待发布</option><option>已发布</option></select>
           <select id="filterPriority"><option value="">全部优先级</option><option value="high">高(8-10)</option><option value="mid">中(5-7)</option><option value="low">低(1-4)</option></select>
         </div>
@@ -86,8 +106,16 @@
           <div class="form-grid">
             <div class="form-group full-width"><label>选题标题 *</label><input type="text" name="title" required></div>
             <div class="form-group"><label>系列/栏目</label><input type="text" name="series"></div>
-            <div class="form-group"><label>一级分类（母题）</label><input type="text" name="category1"></div>
-            <div class="form-group"><label>二级分类（内容类型）</label><input type="text" name="category2"></div>
+            <div class="form-group"><label>一级分类（母题）</label><select name="category1">
+              <option value="">请选择</option>
+              <option>1.流量获客类</option>
+              <option>2.信任建立类</option>
+              <option>3.变现转化类</option>
+              <option>4.辅助选题</option>
+            </select></div>
+            <div class="form-group"><label>二级分类（内容类型）</label><select name="category2" id="category2Select">
+              <option value="">请选择</option>
+            </select></div>
             <div class="form-group"><label>题型</label><input type="text" name="questionType"></div>
             <div class="form-group"><label>对应考点/章节</label><input type="text" name="examPoint"></div>
             <div class="form-group"><label>关键词标签</label><input type="text" name="keywords" placeholder="3-5个，逗号隔开"></div>
