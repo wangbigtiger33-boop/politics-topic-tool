@@ -642,5 +642,43 @@ function renderRecommend() {
 }
 
 // ========== 初始化 ==========
-updateFilterOptions();
-renderTopics();
+async function init() {
+  // 自动加载远程CSV数据
+  try {
+    const res = await fetch('data/new-topic.csv?t=' + Date.now());
+    if (res.ok) {
+      const text = await res.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      if (lines.length >= 2) {
+        const headers = parseCSVLine(lines[0]);
+        const headerMap = {};
+        headers.forEach((h, i) => {
+          const idx = CSV_HEADERS.indexOf(h.trim().replace(/^\uFEFF/,''));
+          if (idx >= 0) headerMap[i] = FIELDS[idx];
+        });
+
+        let imported = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const vals = parseCSVLine(lines[i]);
+          const obj = {};
+          vals.forEach((v, ci) => { if (headerMap[ci]) obj[headerMap[ci]] = v.trim(); });
+          if (!obj.title) continue;
+          NUM_FIELDS.forEach(k => { if (obj[k]) obj[k] = parseInt(obj[k]) || 0; });
+          if (!obj.id) obj.id = nextId(topics);
+          if (!obj.status) obj.status = '待策划';
+          if (!obj.createdAt) obj.createdAt = today();
+
+          // 只导入本地没有的（按ID判断）
+          const existing = topics.findIndex(t => String(t.id) === String(obj.id));
+          if (existing >= 0) topics[existing] = {...topics[existing], ...obj};
+          else { topics.push(obj); imported++; }
+        }
+        if (imported > 0) save(topics);
+      }
+    }
+  } catch(e) { /* 离线或加载失败，忽略 */ }
+
+  updateFilterOptions();
+  renderTopics();
+}
+init();
